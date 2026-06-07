@@ -7,6 +7,8 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
       "backgroundColor": "#0F766E"
     },
     "plugins": [
@@ -14,15 +16,21 @@
       "expo-secure-store",
       [
         "expo-camera",
-        { "cameraPermission": "Izinkan LaporAja mengakses kamera untuk foto laporan" }
+        {
+          "cameraPermission": "Izinkan LaporAja mengakses kamera untuk foto laporan"
+        }
       ],
       [
         "expo-location",
-        { "locationWhenInUsePermission": "Izinkan LaporAja mengakses lokasi untuk menandai laporan" }
+        {
+          "locationWhenInUsePermission": "Izinkan LaporAja mengakses lokasi untuk menandai laporan"
+        }
       ],
       [
         "expo-image-picker",
-        { "photosPermission": "Izinkan LaporAja mengakses galeri untuk upload foto laporan" }
+        {
+          "photosPermission": "Izinkan LaporAja mengakses galeri untuk upload foto laporan"
+        }
       ]
     ]
   }
