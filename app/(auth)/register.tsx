@@ -1,112 +1,276 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useState } from "react"
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    Alert,
+} from "react-native"
+import { useRouter } from "expo-router"
+import { TextInput } from "react-native-paper"
+import { MapPin, UserPlus } from "lucide-react-native"
+import { useAuthStore } from "@/stores/auth.store"
+import { colors, fontFamily, fontSize, radius, shadows } from "@/lib/theme"
 
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+export default function RegisterScreen() {
+    const router = useRouter()
+    const registerUser = useAuthStore((s) => s.register)
 
-export default function TabTwoScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
-        </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
-  );
+    const [name, setName] = useState("")
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [confirmPass, setConfirmPass] = useState("")
+    const [showPass, setShowPass] = useState(false)
+    const [loading, setLoading] = useState(false)
+
+    const handleRegister = async () => {
+        if (!name.trim() || !email.trim() || !password.trim()) {
+            Alert.alert("Error", "Semua field harus diisi")
+            return
+        }
+        if (password !== confirmPass) {
+            Alert.alert("Error", "Password tidak cocok")
+            return
+        }
+        if (password.length < 6) {
+            Alert.alert("Error", "Password minimal 6 karakter")
+            return
+        }
+
+        setLoading(true)
+        const success = await registerUser(name.trim(), email.trim(), password)
+        setLoading(false)
+
+        if (success) {
+            router.replace("/(main)/(home)")
+        } else {
+            Alert.alert("Gagal", "Email sudah terdaftar atau terjadi kesalahan")
+        }
+    }
+
+    const inputTheme = {
+        fonts: {
+            bodyLarge: { fontFamily: fontFamily.regular },
+        },
+    }
+
+    return (
+        <KeyboardAvoidingView
+            style={styles.container}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+            <ScrollView
+                contentContainerStyle={styles.scroll}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+            >
+                {/* Logo */}
+                <View style={styles.logoSection}>
+                    <View style={[styles.logoIcon, shadows.brand]}>
+                        <MapPin size={24} color="#fff" />
+                    </View>
+                    <Text style={styles.logoText}>LaporAja</Text>
+                    <Text style={styles.logoSub}>Buat akun baru</Text>
+                </View>
+
+                {/* Form */}
+                <View style={[styles.card, shadows.md]}>
+                    <TextInput
+                        label="Nama Lengkap"
+                        value={name}
+                        onChangeText={setName}
+                        autoCapitalize="words"
+                        mode="outlined"
+                        style={styles.input}
+                        outlineStyle={styles.inputOutline}
+                        outlineColor={colors.cream[300]}
+                        activeOutlineColor={colors.brand[500]}
+                        textColor={colors.text.primary}
+                        theme={inputTheme}
+                    />
+
+                    <TextInput
+                        label="Email"
+                        value={email}
+                        onChangeText={setEmail}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        mode="outlined"
+                        style={styles.input}
+                        outlineStyle={styles.inputOutline}
+                        outlineColor={colors.cream[300]}
+                        activeOutlineColor={colors.brand[500]}
+                        textColor={colors.text.primary}
+                        theme={inputTheme}
+                    />
+
+                    <TextInput
+                        label="Password"
+                        value={password}
+                        onChangeText={setPassword}
+                        secureTextEntry={!showPass}
+                        mode="outlined"
+                        style={styles.input}
+                        outlineStyle={styles.inputOutline}
+                        outlineColor={colors.cream[300]}
+                        activeOutlineColor={colors.brand[500]}
+                        textColor={colors.text.primary}
+                        right={
+                            <TextInput.Icon
+                                icon={showPass ? "eye-off" : "eye"}
+                                onPress={() => setShowPass((v) => !v)}
+                                color={colors.text.placeholder}
+                            />
+                        }
+                        theme={inputTheme}
+                    />
+
+                    <TextInput
+                        label="Konfirmasi Password"
+                        value={confirmPass}
+                        onChangeText={setConfirmPass}
+                        secureTextEntry={!showPass}
+                        mode="outlined"
+                        style={styles.input}
+                        outlineStyle={styles.inputOutline}
+                        outlineColor={colors.cream[300]}
+                        activeOutlineColor={colors.brand[500]}
+                        textColor={colors.text.primary}
+                        theme={inputTheme}
+                    />
+
+                    {/* Password strength hint */}
+                    {password.length > 0 && password.length < 6 && (
+                        <Text style={styles.hint}>
+                            Password minimal 6 karakter
+                        </Text>
+                    )}
+
+                    {/* Register button */}
+                    <TouchableOpacity
+                        onPress={handleRegister}
+                        disabled={loading}
+                        style={[
+                            styles.submitBtn,
+                            shadows.brand,
+                            loading && { opacity: 0.7 },
+                        ]}
+                        activeOpacity={0.85}
+                    >
+                        {loading ? (
+                            <Text style={styles.submitText}>Mendaftar...</Text>
+                        ) : (
+                            <>
+                                <UserPlus size={18} color="#fff" />
+                                <Text style={styles.submitText}>Daftar</Text>
+                            </>
+                        )}
+                    </TouchableOpacity>
+                </View>
+
+                {/* Login link */}
+                <View style={styles.footer}>
+                    <Text style={styles.footerText}>Sudah punya akun? </Text>
+                    <TouchableOpacity
+                        onPress={() => router.push("/(auth)/login")}
+                    >
+                        <Text style={styles.footerLink}>Masuk</Text>
+                    </TouchableOpacity>
+                </View>
+            </ScrollView>
+        </KeyboardAvoidingView>
+    )
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-});
+    container: {
+        flex: 1,
+        backgroundColor: colors.cream[100],
+    },
+    scroll: {
+        flexGrow: 1,
+        justifyContent: "center",
+        paddingHorizontal: 24,
+        paddingVertical: 40,
+    },
+    logoSection: {
+        alignItems: "center",
+        marginBottom: 32,
+    },
+    logoIcon: {
+        width: 56,
+        height: 56,
+        borderRadius: radius.xl,
+        backgroundColor: colors.brand[500],
+        justifyContent: "center",
+        alignItems: "center",
+        marginBottom: 16,
+    },
+    logoText: {
+        fontFamily: fontFamily.extrabold,
+        fontSize: fontSize["3xl"],
+        color: colors.text.primary,
+        letterSpacing: -0.5,
+    },
+    logoSub: {
+        fontFamily: fontFamily.regular,
+        fontSize: fontSize.md,
+        color: colors.text.muted,
+        marginTop: 4,
+    },
+    card: {
+        backgroundColor: colors.cream[50],
+        borderRadius: radius["2xl"],
+        borderWidth: 1,
+        borderColor: colors.cream[300],
+        padding: 24,
+        gap: 14,
+    },
+    input: {
+        backgroundColor: colors.cream[50],
+        fontSize: fontSize.md,
+    },
+    inputOutline: {
+        borderRadius: radius.md,
+    },
+    hint: {
+        fontFamily: fontFamily.medium,
+        fontSize: fontSize.xs,
+        color: colors.accent.orange,
+        marginTop: -6,
+        paddingLeft: 4,
+    },
+    submitBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        backgroundColor: colors.brand[500],
+        paddingVertical: 15,
+        borderRadius: radius.lg,
+        marginTop: 4,
+    },
+    submitText: {
+        fontFamily: fontFamily.bold,
+        fontSize: fontSize.lg,
+        color: "#fff",
+    },
+    footer: {
+        flexDirection: "row",
+        justifyContent: "center",
+        marginTop: 24,
+    },
+    footerText: {
+        fontFamily: fontFamily.regular,
+        fontSize: fontSize.base,
+        color: colors.text.muted,
+    },
+    footerLink: {
+        fontFamily: fontFamily.bold,
+        fontSize: fontSize.base,
+        color: colors.brand[500],
+    },
+})
