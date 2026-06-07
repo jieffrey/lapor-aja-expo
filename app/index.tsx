@@ -1,29 +1,35 @@
-import { Link } from 'expo-router';
-import { StyleSheet } from 'react-native';
+import { useEffect } from "react"
+import { View, ActivityIndicator } from "react-native"
+import { useRouter } from "expo-router"
+import { useAuthStore } from "@/stores/auth.store"
+import { colors } from "@/lib/theme"
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+export default function Index() {
+    const router = useRouter()
+    const { loading, isAuthenticated, hasSeenOnboarding } = useAuthStore()
 
-export default function ModalScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <ThemedText type="title">This is a modal</ThemedText>
-      <Link href="/" dismissTo style={styles.link}>
-        <ThemedText type="link">Go to home screen</ThemedText>
-      </Link>
-    </ThemedView>
-  );
+    useEffect(() => {
+        if (loading) return
+
+        if (!hasSeenOnboarding) {
+            router.replace("/(onboarding)")
+        } else if (isAuthenticated) {
+            router.replace("/(main)/(home)")
+        } else {
+            router.replace("/(auth)/login")
+        }
+    }, [loading, isAuthenticated, hasSeenOnboarding, router])
+
+    return (
+        <View
+            style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+                backgroundColor: colors.cream[100],
+            }}
+        >
+            <ActivityIndicator size="large" color={colors.brand[500]} />
+        </View>
+    )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  link: {
-    marginTop: 15,
-    paddingVertical: 15,
-  },
-});
