@@ -1,19 +1,19 @@
+import { colors, fontFamily, fontSize, radius, shadows } from "@/lib/theme"
+import { useAuthStore } from "@/stores/auth.store"
+import { useRouter } from "expo-router"
+import { MapPin, UserPlus } from "lucide-react-native"
 import { useState } from "react"
 import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
+    Alert,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
-    Alert,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native"
-import { useRouter } from "expo-router"
 import { TextInput } from "react-native-paper"
-import { MapPin, UserPlus } from "lucide-react-native"
-import { useAuthStore } from "@/stores/auth.store"
-import { colors, fontFamily, fontSize, radius, shadows } from "@/lib/theme"
 
 export default function RegisterScreen() {
     const router = useRouter()
@@ -51,7 +51,10 @@ export default function RegisterScreen() {
 
         switch (result.error) {
             case "email_taken":
-                Alert.alert("Pendaftaran Gagal", "Email sudah terdaftar")
+                Alert.alert(
+                    "Pendaftaran Gagal",
+                    result.message || "Email sudah terdaftar"
+                )
                 break
             case "network_error":
                 Alert.alert(
@@ -70,7 +73,7 @@ export default function RegisterScreen() {
             default:
                 Alert.alert(
                     "Pendaftaran Gagal",
-                    "Terjadi kesalahan, coba lagi"
+                    result.message || "Terjadi kesalahan, coba lagi"
                 )
         }
     }

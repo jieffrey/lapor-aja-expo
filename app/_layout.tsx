@@ -36,7 +36,6 @@ export default function RootLayout() {
     init()
   }, [fontsLoaded])
 
-  // Render null sampai font siap, biar tidak ada flash layout
   if (!fontsLoaded) return null
 
   return (

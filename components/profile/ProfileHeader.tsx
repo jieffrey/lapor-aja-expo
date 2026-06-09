@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from "react-native"
+import { View, Text, Image, StyleSheet } from "react-native"
 import { Trophy } from "lucide-react-native"
 import { colors, fontFamily, fontSize, radius, shadows } from "@/lib/theme"
 import type { User } from "@/lib/types"
@@ -24,8 +24,15 @@ export default function ProfileHeader({ user }: Props) {
     return (
         <View style={[styles.card, shadows.md]}>
             {/* Avatar */}
-            <View style={[styles.avatar, shadows.brand]}>
-                <Text style={styles.initials}>{initials}</Text>
+            <View style={[styles.avatarWrap, shadows.brand]}>
+                {user.avatar_url ? (
+                    <Image
+                        source={{ uri: user.avatar_url }}
+                        style={styles.avatarImg}
+                    />
+                ) : (
+                    <Text style={styles.initials}>{initials}</Text>
+                )}
             </View>
 
             {/* Name + email */}
@@ -73,7 +80,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginHorizontal: 20,
     },
-    avatar: {
+    avatarWrap: {
         width: 72,
         height: 72,
         borderRadius: 36,
@@ -81,6 +88,12 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         marginBottom: 14,
+        overflow: "hidden",
+    },
+    avatarImg: {
+        width: 72,
+        height: 72,
+        borderRadius: 36,
     },
     initials: {
         fontFamily: fontFamily.extrabold,

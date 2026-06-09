@@ -4,6 +4,7 @@ export type ReportStatus = "Pending" | "In Progress" | "Resolved" | "Rejected";
 export type ReportPriority = "Low" | "Medium" | "High";
 
 export interface User {
+  avatar_url: any;
   id: number;
   name: string;
   email: string;
