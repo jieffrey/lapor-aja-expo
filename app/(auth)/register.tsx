@@ -41,13 +41,37 @@ export default function RegisterScreen() {
         }
 
         setLoading(true)
-        const success = await registerUser(name.trim(), email.trim(), password)
+        const result = await registerUser(name.trim(), email.trim(), password)
         setLoading(false)
 
-        if (success) {
+        if (result.success) {
             router.replace("/(main)/(home)")
-        } else {
-            Alert.alert("Gagal", "Email sudah terdaftar atau terjadi kesalahan")
+            return
+        }
+
+        switch (result.error) {
+            case "email_taken":
+                Alert.alert("Pendaftaran Gagal", "Email sudah terdaftar")
+                break
+            case "network_error":
+                Alert.alert(
+                    "Koneksi Bermasalah",
+                    "Tidak bisa terhubung ke server. Periksa koneksi internetmu."
+                )
+                break
+            case "invalid_credentials":
+                // register berhasil tapi auto-login gagal
+                Alert.alert(
+                    "Akun Dibuat",
+                    "Akun berhasil dibuat, silakan login"
+                )
+                router.replace("/(auth)/login")
+                break
+            default:
+                Alert.alert(
+                    "Pendaftaran Gagal",
+                    "Terjadi kesalahan, coba lagi"
+                )
         }
     }
 
@@ -142,14 +166,12 @@ export default function RegisterScreen() {
                         theme={inputTheme}
                     />
 
-                    {/* Password strength hint */}
                     {password.length > 0 && password.length < 6 && (
                         <Text style={styles.hint}>
                             Password minimal 6 karakter
                         </Text>
                     )}
 
-                    {/* Register button */}
                     <TouchableOpacity
                         onPress={handleRegister}
                         disabled={loading}

@@ -30,7 +30,7 @@ export async function registerApi(
 }
 
 export async function getMe(): Promise<User> {
-  const res = await api.get("/auth/me");
+  const res = await api.get("/me");
   return res.data.data;
 }
 

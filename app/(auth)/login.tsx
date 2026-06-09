@@ -31,13 +31,32 @@ export default function LoginScreen() {
         }
 
         setLoading(true)
-        const success = await login(email.trim(), password)
+        const result = await login(email.trim(), password)
         setLoading(false)
 
-        if (success) {
+        if (result.success) {
             router.replace("/(main)/(home)")
-        } else {
-            Alert.alert("Login Gagal", "Email atau password salah")
+            return
+        }
+
+        switch (result.error) {
+            case "invalid_credentials":
+                Alert.alert("Login Gagal", "Email atau password salah")
+                break
+            case "role_forbidden":
+                Alert.alert(
+                    "Akses Ditolak",
+                    "Akun admin hanya bisa diakses melalui web"
+                )
+                break
+            case "network_error":
+                Alert.alert(
+                    "Koneksi Bermasalah",
+                    "Tidak bisa terhubung ke server. Periksa koneksi internetmu."
+                )
+                break
+            default:
+                Alert.alert("Login Gagal", "Terjadi kesalahan, coba lagi")
         }
     }
 
@@ -106,7 +125,6 @@ export default function LoginScreen() {
                         }}
                     />
 
-                    {/* Login button */}
                     <TouchableOpacity
                         onPress={handleLogin}
                         disabled={loading}

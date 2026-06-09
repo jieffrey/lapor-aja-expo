@@ -8,31 +8,94 @@ import {
     Alert,
     KeyboardAvoidingView,
     Platform,
+    Modal,
+    Pressable,
 } from "react-native"
 import { useRouter } from "expo-router"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { TextInput } from "react-native-paper"
-import { Send, Loader2, PlusCircle, ChevronDown } from "lucide-react-native"
+import {
+    Send,
+    Loader2,
+    PlusCircle,
+    ChevronDown,
+    Check,
+    X,
+} from "lucide-react-native"
 import type { ImagePickerAsset } from "expo-image-picker"
 import api from "@/lib/api"
 import { colors, fontFamily, fontSize, radius, shadows } from "@/lib/theme"
 import ImagePickerGrid from "@/components/report/ImagePickerGrid"
 import AISuggestion from "@/components/report/AISugesstion"
-import MobileLocationPicker from "@/components/report/MobileLocationPicker"
+// import MobileLocationPicker from "@/components/report/MobileLocationPicker"
+import LocationSearchPicker from "@/components/report/LocationSearchPicker"
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? ""
-const NEXT_URL = process.env.EXPO_PUBLIC_NEXT_URL ?? "http://192.168.1.x:3000"
 
 const CATEGORIES = [
-    "Infrastruktur",
-    "Lingkungan",
-    "Kebersihan",
-    "Keamanan",
-    "Fasilitas Umum",
-    "Lainnya",
+    { label: "Infrastruktur", icon: "🏗️" },
+    { label: "Lingkungan", icon: "🌿" },
+    { label: "Kebersihan", icon: "🧹" },
+    { label: "Keamanan", icon: "🔒" },
+    { label: "Fasilitas Umum", icon: "🏛️" },
+    { label: "Lainnya", icon: "📋" },
 ]
 
-const PRIORITIES = ["Low", "Medium", "High"]
+const PRIORITIES: {
+    label: "Low" | "Medium" | "High"
+    color: string
+    bg: string
+    desc: string
+}[] = [
+        {
+            label: "Low",
+            color: colors.brand[500],
+            bg: colors.brand[50],
+            desc: "Tidak mendesak",
+        },
+        {
+            label: "Medium",
+            color: "#92400E",
+            bg: "#FEF3C7",
+            desc: "Perlu ditangani",
+        },
+        {
+            label: "High",
+            color: "#991B1B",
+            bg: "#FEE2E2",
+            desc: "Segera ditangani",
+        },
+    ]
+
+type PickerModalProps = {
+    visible: boolean
+    onClose: () => void
+    title: string
+    children: React.ReactNode
+}
+
+function PickerModal({ visible, onClose, title, children }: PickerModalProps) {
+    return (
+        <Modal
+            visible={visible}
+            transparent
+            animationType="fade"
+            onRequestClose={onClose}
+        >
+            <Pressable style={styles.modalOverlay} onPress={onClose}>
+                <Pressable style={styles.modalSheet} onPress={() => { }}>
+                    <View style={styles.modalHeader}>
+                        <Text style={styles.modalTitle}>{title}</Text>
+                        <TouchableOpacity onPress={onClose} hitSlop={8}>
+                            <X size={18} color={colors.text.muted} />
+                        </TouchableOpacity>
+                    </View>
+                    {children}
+                </Pressable>
+            </Pressable>
+        </Modal>
+    )
+}
 
 export default function CreateReportScreen() {
     const router = useRouter()
@@ -41,15 +104,19 @@ export default function CreateReportScreen() {
     const [title, setTitle] = useState("")
     const [description, setDescription] = useState("")
     const [category, setCategory] = useState("")
-    const [priority, setPriority] = useState("Medium")
+    const [priority, setPriority] = useState<"Low" | "Medium" | "High">("Medium")
     const [latitude, setLatitude] = useState("")
     const [longitude, setLongitude] = useState("")
     const [images, setImages] = useState<ImagePickerAsset[]>([])
     const [imageError, setImageError] = useState("")
     const [submitting, setSubmitting] = useState(false)
 
+    const [showCatModal, setShowCatModal] = useState(false)
+    const [showPriModal, setShowPriModal] = useState(false)
+
+    const selectedPri = PRIORITIES.find((p) => p.label === priority)!
+
     const handleSubmit = async () => {
-        // Validate
         if (!title.trim()) {
             Alert.alert("Error", "Judul harus diisi")
             return
@@ -107,27 +174,9 @@ export default function CreateReportScreen() {
 
     const handleAIApply = (cat: string, pri: string) => {
         setCategory(cat)
-        setPriority(pri)
-    }
-
-    const showCategoryPicker = () => {
-        Alert.alert("Pilih Kategori", undefined, [
-            ...CATEGORIES.map((c) => ({
-                text: c,
-                onPress: () => setCategory(c),
-            })),
-            { text: "Batal", style: "cancel" as const },
-        ])
-    }
-
-    const showPriorityPicker = () => {
-        Alert.alert("Pilih Prioritas", undefined, [
-            ...PRIORITIES.map((p) => ({
-                text: p,
-                onPress: () => setPriority(p),
-            })),
-            { text: "Batal", style: "cancel" as const },
-        ])
+        if (pri === "Low" || pri === "Medium" || pri === "High") {
+            setPriority(pri)
+        }
     }
 
     const inputTheme = {
@@ -153,9 +202,7 @@ export default function CreateReportScreen() {
                         <PlusCircle size={22} color="#fff" />
                     </View>
                     <View>
-                        <Text style={styles.headerTitle}>
-                            Buat Laporan Baru
-                        </Text>
+                        <Text style={styles.headerTitle}>Buat Laporan Baru</Text>
                         <Text style={styles.headerSub}>
                             Foto, tandai lokasi, dan laporkan
                         </Text>
@@ -164,7 +211,6 @@ export default function CreateReportScreen() {
 
                 {/* Form */}
                 <View style={[styles.card, shadows.sm]}>
-                    {/* Title */}
                     <TextInput
                         label="Judul Laporan"
                         value={title}
@@ -179,7 +225,6 @@ export default function CreateReportScreen() {
                         placeholder="Contoh: Jalan berlubang di RT 05"
                     />
 
-                    {/* Description */}
                     <TextInput
                         label="Deskripsi"
                         value={description}
@@ -196,7 +241,6 @@ export default function CreateReportScreen() {
                         placeholder="Jelaskan masalah secara detail..."
                     />
 
-                    {/* Photos */}
                     <ImagePickerGrid
                         images={images}
                         onChange={(imgs) => {
@@ -207,51 +251,72 @@ export default function CreateReportScreen() {
                         error={imageError}
                     />
 
-                    {/* AI suggestion */}
                     <AISuggestion
                         title={title}
                         description={description}
-                        images={images}
-                        apiUrl={NEXT_URL}
                         onApply={handleAIApply}
                     />
 
-                    {/* Category + Priority pickers */}
+                    {/* Category + Priority */}
                     <View style={styles.pickerRow}>
+                        {/* Category button */}
                         <TouchableOpacity
-                            onPress={showCategoryPicker}
-                            style={[styles.picker, styles.pickerFlex]}
+                            onPress={() => setShowCatModal(true)}
+                            style={[
+                                styles.picker,
+                                styles.pickerFlex,
+                                category && styles.pickerSelected,
+                            ]}
                             activeOpacity={0.7}
                         >
                             <Text
                                 style={[
                                     styles.pickerLabel,
-                                    !category && { color: colors.text.placeholder },
+                                    !category && {
+                                        color: colors.text.placeholder,
+                                    },
                                 ]}
+                                numberOfLines={1}
                             >
-                                {category || "Kategori"}
+                                {category
+                                    ? `${CATEGORIES.find((c) => c.label === category)?.icon ?? ""} ${category}`
+                                    : "Kategori"}
                             </Text>
                             <ChevronDown
                                 size={14}
-                                color={colors.text.placeholder}
+                                color={
+                                    category
+                                        ? colors.brand[500]
+                                        : colors.text.placeholder
+                                }
                             />
                         </TouchableOpacity>
 
+                        {/* Priority button */}
                         <TouchableOpacity
-                            onPress={showPriorityPicker}
-                            style={styles.picker}
+                            onPress={() => setShowPriModal(true)}
+                            style={[
+                                styles.picker,
+                                { backgroundColor: selectedPri.bg },
+                            ]}
                             activeOpacity={0.7}
                         >
-                            <Text style={styles.pickerLabel}>{priority}</Text>
+                            <Text
+                                style={[
+                                    styles.pickerLabel,
+                                    { color: selectedPri.color },
+                                ]}
+                            >
+                                {priority}
+                            </Text>
                             <ChevronDown
                                 size={14}
-                                color={colors.text.placeholder}
+                                color={selectedPri.color}
                             />
                         </TouchableOpacity>
                     </View>
 
-                    {/* Location */}
-                    <MobileLocationPicker
+                    <LocationSearchPicker
                         latitude={latitude}
                         longitude={longitude}
                         onChange={(lat, lng) => {
@@ -285,6 +350,101 @@ export default function CreateReportScreen() {
                     )}
                 </TouchableOpacity>
             </ScrollView>
+
+            {/* Category Modal */}
+            <PickerModal
+                visible={showCatModal}
+                onClose={() => setShowCatModal(false)}
+                title="Pilih Kategori"
+            >
+                {CATEGORIES.map((c) => (
+                    <TouchableOpacity
+                        key={c.label}
+                        onPress={() => {
+                            setCategory(c.label)
+                            setShowCatModal(false)
+                        }}
+                        style={[
+                            styles.optionRow,
+                            category === c.label && styles.optionRowSelected,
+                        ]}
+                        activeOpacity={0.7}
+                    >
+                        <Text style={styles.optionIcon}>{c.icon}</Text>
+                        <Text
+                            style={[
+                                styles.optionLabel,
+                                category === c.label && {
+                                    color: colors.brand[500],
+                                    fontFamily: fontFamily.bold,
+                                },
+                            ]}
+                        >
+                            {c.label}
+                        </Text>
+                        {category === c.label && (
+                            <Check
+                                size={16}
+                                color={colors.brand[500]}
+                                style={{ marginLeft: "auto" }}
+                            />
+                        )}
+                    </TouchableOpacity>
+                ))}
+            </PickerModal>
+
+            {/* Priority Modal */}
+            <PickerModal
+                visible={showPriModal}
+                onClose={() => setShowPriModal(false)}
+                title="Pilih Prioritas"
+            >
+                {PRIORITIES.map((p) => (
+                    <TouchableOpacity
+                        key={p.label}
+                        onPress={() => {
+                            setPriority(p.label)
+                            setShowPriModal(false)
+                        }}
+                        style={[
+                            styles.optionRow,
+                            priority === p.label && {
+                                backgroundColor: p.bg,
+                                borderColor: p.color + "40",
+                            },
+                        ]}
+                        activeOpacity={0.7}
+                    >
+                        <View
+                            style={[
+                                styles.priorityDot,
+                                { backgroundColor: p.color },
+                            ]}
+                        />
+                        <View>
+                            <Text
+                                style={[
+                                    styles.optionLabel,
+                                    { color: p.color },
+                                    priority === p.label && {
+                                        fontFamily: fontFamily.bold,
+                                    },
+                                ]}
+                            >
+                                {p.label}
+                            </Text>
+                            <Text style={styles.optionDesc}>{p.desc}</Text>
+                        </View>
+                        {priority === p.label && (
+                            <Check
+                                size={16}
+                                color={p.color}
+                                style={{ marginLeft: "auto" }}
+                            />
+                        )}
+                    </TouchableOpacity>
+                ))}
+            </PickerModal>
         </KeyboardAvoidingView>
     )
 }
@@ -353,14 +513,20 @@ const styles = StyleSheet.create({
         borderWidth: 1.5,
         borderColor: colors.cream[300],
         backgroundColor: colors.cream[50],
+        gap: 6,
     },
     pickerFlex: {
         flex: 1,
+    },
+    pickerSelected: {
+        borderColor: colors.brand[300],
+        backgroundColor: colors.brand[50],
     },
     pickerLabel: {
         fontFamily: fontFamily.medium,
         fontSize: fontSize.md,
         color: colors.text.primary,
+        flexShrink: 1,
     },
     submitBtn: {
         flexDirection: "row",
@@ -376,5 +542,64 @@ const styles = StyleSheet.create({
         fontFamily: fontFamily.bold,
         fontSize: fontSize.lg,
         color: "#fff",
+    },
+    // Modal styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(0,0,0,0.4)",
+        justifyContent: "flex-end",
+    },
+    modalSheet: {
+        backgroundColor: colors.cream[50],
+        borderTopLeftRadius: radius["2xl"],
+        borderTopRightRadius: radius["2xl"],
+        paddingHorizontal: 20,
+        paddingBottom: 32,
+        paddingTop: 20,
+    },
+    modalHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 16,
+    },
+    modalTitle: {
+        fontFamily: fontFamily.bold,
+        fontSize: fontSize.lg,
+        color: colors.text.primary,
+    },
+    optionRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+        paddingVertical: 13,
+        paddingHorizontal: 12,
+        borderRadius: radius.md,
+        borderWidth: 1,
+        borderColor: "transparent",
+        marginBottom: 6,
+    },
+    optionRowSelected: {
+        backgroundColor: colors.brand[50],
+        borderColor: colors.brand[200],
+    },
+    optionIcon: {
+        fontSize: 20,
+    },
+    optionLabel: {
+        fontFamily: fontFamily.medium,
+        fontSize: fontSize.base,
+        color: colors.text.primary,
+    },
+    optionDesc: {
+        fontFamily: fontFamily.regular,
+        fontSize: fontSize.xs,
+        color: colors.text.muted,
+        marginTop: 1,
+    },
+    priorityDot: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
     },
 })

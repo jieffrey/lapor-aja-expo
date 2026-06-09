@@ -7,15 +7,10 @@ import {
     Dimensions,
     TouchableOpacity,
     ViewToken,
+    StatusBar,
 } from "react-native"
 import { useRouter } from "expo-router"
-import {
-    MapPin,
-    BarChart3,
-    Trophy,
-    ArrowRight,
-    ChevronRight,
-} from "lucide-react-native"
+import { MapPin, BarChart3, Trophy, ArrowRight, ChevronRight } from "lucide-react-native"
 import { useAuthStore } from "@/stores/auth.store"
 import { colors, fontFamily, fontSize, radius, shadows } from "@/lib/theme"
 import OnboardingSlide from "@/components/onboarding/OnboardingSlide"
@@ -25,29 +20,23 @@ const { width } = Dimensions.get("window")
 const SLIDES = [
     {
         id: "1",
-        icon: <MapPin size={36} color="#fff" />,
+        icon: <MapPin size={38} color="#fff" strokeWidth={2} />,
         title: "Laporkan Masalah",
-        description:
-            "Foto, tandai lokasi, dan laporkan masalah lingkungan di sekitarmu dengan mudah",
+        description: "Foto, tandai lokasi, dan laporkan masalah lingkungan di sekitarmu dengan mudah",
         gradient: [colors.brand[500], colors.brand[300]] as [string, string],
     },
     {
         id: "2",
-        icon: <BarChart3 size={36} color="#fff" />,
+        icon: <BarChart3 size={38} color="#fff" strokeWidth={2} />,
         title: "Pantau Progress",
-        description:
-            "Ikuti perkembangan laporanmu dari pending hingga selesai ditangani",
-        gradient: [colors.accent.amber, colors.accent.orange] as [
-            string,
-            string,
-        ],
+        description: "Ikuti perkembangan laporanmu dari pending hingga selesai ditangani",
+        gradient: [colors.accent.amber, colors.accent.orange] as [string, string],
     },
     {
         id: "3",
-        icon: <Trophy size={36} color="#fff" />,
+        icon: <Trophy size={38} color="#fff" strokeWidth={2} />,
         title: "Raih Poin",
-        description:
-            "Kumpulkan poin dari setiap laporan dan naik peringkat di leaderboard warga aktif",
+        description: "Kumpulkan poin dari setiap laporan dan naik peringkat di leaderboard warga aktif",
         gradient: [colors.brand[600], colors.brand[400]] as [string, string],
     },
 ]
@@ -59,6 +48,7 @@ export default function OnboardingScreen() {
     const [activeIndex, setActiveIndex] = useState(0)
 
     const isLast = activeIndex === SLIDES.length - 1
+    const activeSlide = SLIDES[activeIndex]
 
     const handleNext = () => {
         if (isLast) {
@@ -85,6 +75,8 @@ export default function OnboardingScreen() {
 
     return (
         <View style={styles.container}>
+            <StatusBar barStyle="dark-content" backgroundColor={colors.cream[100]} />
+
             {/* Skip button */}
             {!isLast && (
                 <TouchableOpacity
@@ -95,6 +87,14 @@ export default function OnboardingScreen() {
                     <Text style={styles.skipText}>Lewati</Text>
                 </TouchableOpacity>
             )}
+
+            {/* Slide counter misal "1 / 3" */}
+            <View style={styles.counter}>
+                <Text style={styles.counterText}>
+                    {activeIndex + 1}
+                    <Text style={styles.counterTotal}> / {SLIDES.length}</Text>
+                </Text>
+            </View>
 
             {/* Slides */}
             <View style={styles.slidesWrap}>
@@ -120,25 +120,48 @@ export default function OnboardingScreen() {
 
             {/* Bottom section */}
             <View style={styles.bottomSection}>
-                {/* Dots */}
+                {/* Dots indicator */}
                 <View style={styles.dots}>
                     {SLIDES.map((_, i) => (
-                        <View
+                        <TouchableOpacity
                             key={i}
-                            style={[
-                                styles.dot,
-                                i === activeIndex
-                                    ? styles.dotActive
-                                    : styles.dotInactive,
-                            ]}
-                        />
+                            onPress={() =>
+                                flatListRef.current?.scrollToIndex({ index: i })
+                            }
+                            activeOpacity={0.7}
+                        >
+                            <View
+                                style={[
+                                    styles.dot,
+                                    i === activeIndex
+                                        ? [
+                                              styles.dotActive,
+                                              {
+                                                  backgroundColor:
+                                                      activeSlide.gradient[0],
+                                              },
+                                          ]
+                                        : styles.dotInactive,
+                                ]}
+                            />
+                        </TouchableOpacity>
                     ))}
                 </View>
 
-                {/* CTA Button */}
+                {/* CTA button — warna ikut slide aktif */}
                 <TouchableOpacity
                     onPress={handleNext}
-                    style={[styles.ctaBtn, shadows.brand]}
+                    style={[
+                        styles.ctaBtn,
+                        { backgroundColor: activeSlide.gradient[0] },
+                        {
+                            shadowColor: activeSlide.gradient[0],
+                            shadowOffset: { width: 0, height: 6 },
+                            shadowOpacity: 0.35,
+                            shadowRadius: 16,
+                            elevation: 8,
+                        },
+                    ]}
                     activeOpacity={0.85}
                 >
                     <Text style={styles.ctaText}>
@@ -150,6 +173,21 @@ export default function OnboardingScreen() {
                         <ChevronRight size={18} color="#fff" />
                     )}
                 </TouchableOpacity>
+
+                {/* Login shortcut di slide terakhir */}
+                {isLast && (
+                    <TouchableOpacity
+                        onPress={() => router.replace("/(auth)/login")}
+                        activeOpacity={0.7}
+                    >
+                        <Text style={styles.loginHint}>
+                            Sudah punya akun?{" "}
+                            <Text style={[styles.loginLink, { color: activeSlide.gradient[0] }]}>
+                                Masuk
+                            </Text>
+                        </Text>
+                    </TouchableOpacity>
+                )}
             </View>
         </View>
     )
@@ -162,7 +200,7 @@ const styles = StyleSheet.create({
     },
     skipBtn: {
         position: "absolute",
-        top: 60,
+        top: 56,
         right: 24,
         zIndex: 10,
         paddingHorizontal: 16,
@@ -172,23 +210,39 @@ const styles = StyleSheet.create({
     },
     skipText: {
         fontFamily: fontFamily.semibold,
-        fontSize: fontSize.base,
+        fontSize: fontSize.sm,
         color: colors.text.muted,
+    },
+    counter: {
+        position: "absolute",
+        top: 60,
+        left: 28,
+        zIndex: 10,
+    },
+    counterText: {
+        fontFamily: fontFamily.bold,
+        fontSize: fontSize.sm,
+        color: colors.text.primary,
+    },
+    counterTotal: {
+        fontFamily: fontFamily.regular,
+        color: colors.text.placeholder,
     },
     slidesWrap: {
         flex: 1,
         justifyContent: "center",
-        paddingTop: 60,
+        paddingTop: 80,
     },
     bottomSection: {
-        paddingHorizontal: 32,
-        paddingBottom: 50,
+        paddingHorizontal: 28,
+        paddingBottom: 48,
         alignItems: "center",
-        gap: 28,
+        gap: 24,
     },
     dots: {
         flexDirection: "row",
         gap: 8,
+        alignItems: "center",
     },
     dot: {
         height: 8,
@@ -196,7 +250,6 @@ const styles = StyleSheet.create({
     },
     dotActive: {
         width: 28,
-        backgroundColor: colors.brand[500],
     },
     dotInactive: {
         width: 8,
@@ -210,11 +263,18 @@ const styles = StyleSheet.create({
         gap: 8,
         paddingVertical: 16,
         borderRadius: radius.lg,
-        backgroundColor: colors.brand[500],
     },
     ctaText: {
         fontFamily: fontFamily.bold,
         fontSize: fontSize.lg,
         color: "#fff",
+    },
+    loginHint: {
+        fontFamily: fontFamily.regular,
+        fontSize: fontSize.sm,
+        color: colors.text.muted,
+    },
+    loginLink: {
+        fontFamily: fontFamily.bold,
     },
 })

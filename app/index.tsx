@@ -11,13 +11,14 @@ export default function Index() {
     useEffect(() => {
         if (loading) return
 
-        if (!hasSeenOnboarding) {
-            router.replace("/(onboarding)")
-        } else if (isAuthenticated) {
-            router.replace("/(main)/(home)")
-        } else {
-            router.replace("/(auth)/login")
-        }
+        return router.replace("/(onboarding)")
+        // if (!hasSeenOnboarding) {
+        //     router.replace("/(onboarding)")
+        // } else if (isAuthenticated) {
+        //     router.replace("/(main)/(home)")
+        // } else {
+        //     router.replace("/(auth)/login")
+        // }
     }, [loading, isAuthenticated, hasSeenOnboarding, router])
 
     return (

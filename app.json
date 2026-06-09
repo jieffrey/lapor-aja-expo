@@ -6,11 +6,13 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/images/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0F766E"
-    },
+    // "splash": {
+    //   "image": "./assets/images/splash-icon.png",
+    //   "resizeMode": "contain",
+    //   "backgroundColor": "#0F766E",
+    //   "imageWidth": 200,
+    //   "imageHeight": 200
+    // },
     "plugins": [
       "expo-router",
       "expo-secure-store",
